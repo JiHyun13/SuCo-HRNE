@@ -1,0 +1,98 @@
+import os
+from features.extract_features import extract_chroma
+from modules.mass import compute_mass_sdm
+from modules.hubness import reduce_hubness
+from modules.network import enhance_network
+from modules.summarizer import summarize_features
+from similarity.cross_similarity import compute_cross_similarity
+
+
+def run():
+    os.chdir(os.path.dirname(os.path.abspath(__file__)))
+    query_path = "C:/Users/zappe/Desktop/창학/SuCo-HRNE/data/query/Similar_Ballade_00001_Org.wav"
+    ref_dir = "C:/Users/zappe/Desktop/창학/SuCo-HRNE/data/reference"
+
+    # 쿼리 곡 번호 추출
+    query_id = query_path.split("_")[2]
+
+    print(f"[로그 1/14] ▶ 쿼리 곡 로딩 중: {query_path}")
+    query_feat = extract_chroma(query_path)
+    print("[로그 2/14]    - 크로마 특징 추출 완료")
+
+    query_sdm = compute_mass_sdm(query_feat)
+    print("[로그 3/14]    - SDM 계산 완료")
+
+    query_sdm_hr = reduce_hubness(query_sdm)
+    print("[로그 4/14]    - 허브니스 제거 완료")
+
+    query_ssm = enhance_network(query_sdm_hr)
+    print("[로그 5/14]    - 네트워크 강화 완료")
+
+    query_summary = summarize_features(query_ssm)
+    print("[로그 6/14]    - 요약 특징 추출 완료")
+
+    sim_scores = []
+    ref_list = []
+    total_refs = len([f for f in os.listdir(ref_dir) if f.endswith(".wav")])
+    current_idx = 1
+
+    for ref_file in os.listdir(ref_dir):
+        if not ref_file.endswith(".wav"):
+            continue
+
+        print(f"[로그 7/14] ▶ ({current_idx}/{total_refs}) 비교 대상: {ref_file}")
+        ref_path = os.path.join(ref_dir, ref_file)
+
+        ref_feat = extract_chroma(ref_path)
+        print(f"[로그 8/14] ▶ ({current_idx}/{total_refs})   - 특징 추출 완료")
+
+        ref_sdm = compute_mass_sdm(ref_feat)
+        print(f"[로그 9/14]  ▶ ({current_idx}/{total_refs})  - SDM 계산 완료")
+
+        ref_sdm_hr = reduce_hubness(ref_sdm)
+        ref_ssm = enhance_network(ref_sdm_hr)
+        ref_summary = summarize_features(ref_ssm)
+
+        sim_score = compute_cross_similarity(query_summary, ref_summary)
+        print(f"[로그 10/14] ▶ ({current_idx}/{total_refs})  - 유사도 계산 결과 ({ref_file}): {sim_score:.4f}")
+
+        sim_scores.append(sim_score)
+        ref_list.append(ref_file)
+        current_idx += 1
+
+    # 정확도 계산: 쿼리와 같은 곡 번호를 가진 커버들만 정답으로 간주
+    threshold = 0.5
+    TP, TN, FP, FN = 0, 0, 0, 0
+    for ref, score in zip(ref_list, sim_scores):
+        pred = int(score >= threshold)
+        ref_id = ref.split("_")[2]
+        label = 1 if ref_id == query_id else 0
+        if pred == 1 and label == 1: TP += 1
+        elif pred == 0 and label == 0: TN += 1
+        elif pred == 1 and label == 0: FP += 1
+        elif pred == 0 and label == 1: FN += 1
+
+    total = TP + TN + FP + FN
+    accuracy = (TP + TN) / total if total > 0 else 0
+    print("\n[로그 11/14] --- 최종 평가 결과 ---")
+    print(f"정확도: {accuracy:.2%}")
+    print(f"TP(정답=1, 예측=1): {TP}")
+    print(f"TN(정답=0, 예측=0): {TN}")
+    print(f"FP(정답=0, 예측=1): {FP}")
+    print(f"FN(정답=1, 예측=0): {FN}")
+    print("[로그 12/14] 전체 비교 완료")
+
+    # 후처리: 유사도 결과 저장
+    result_path = "data/results/similarity_scores.txt"
+    os.makedirs(os.path.dirname(result_path), exist_ok=True)
+    with open(result_path, "w", encoding="utf-8") as f:
+        for i, (ref, score) in enumerate(zip(ref_list, sim_scores), start=1):
+            f.write(f"{i}번째 음악 ({ref}) 유사도: {score:.4f}\n")
+    print(f"[로그 13/14] 유사도 결과 저장 완료 → {result_path}")
+
+    print("[로그 14/14] 프로그램 종료 완료")
+
+
+
+if __name__ == "__main__":
+    run()
