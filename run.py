@@ -5,30 +5,29 @@ from modules.hubness import reduce_hubness
 from modules.network import enhance_network
 from modules.summarizer import summarize_features
 from similarity.cross_similarity import compute_cross_similarity
-
+from cashe import cache_or_compute
 
 def run():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
     query_path = "C:/Users/zappe/Desktop/창학/SuCo-HRNE/data/query/Similar_Ballade_00001_Org.wav"
     ref_dir = "C:/Users/zappe/Desktop/창학/SuCo-HRNE/data/reference"
 
-    # 쿼리 곡 번호 추출
-    query_id = query_path.split("_")[2]
+    query_id = query_path.split("_")[2]  # e.g., '00001'
 
     print(f"[로그 1/14] ▶ 쿼리 곡 로딩 중: {query_path}")
-    query_feat = extract_chroma(query_path)
+    query_feat = cache_or_compute(query_path, extract_chroma, f"cache/{query_id}/query_feat.npy")
     print("[로그 2/14]    - 크로마 특징 추출 완료")
 
-    query_sdm = compute_mass_sdm(query_feat)
+    query_sdm = cache_or_compute(None, lambda: compute_mass_sdm(query_feat), f"cache/{query_id}/query_sdm.npy")
     print("[로그 3/14]    - SDM 계산 완료")
 
-    query_sdm_hr = reduce_hubness(query_sdm)
+    query_sdm_hr = cache_or_compute(None, lambda: reduce_hubness(query_sdm), f"cache/{query_id}/query_sdm_hr.npy")
     print("[로그 4/14]    - 허브니스 제거 완료")
 
-    query_ssm = enhance_network(query_sdm_hr)
+    query_ssm = cache_or_compute(None, lambda: enhance_network(query_sdm_hr), f"cache/{query_id}/query_ssm.npy")
     print("[로그 5/14]    - 네트워크 강화 완료")
 
-    query_summary = summarize_features(query_ssm)
+    query_summary = cache_or_compute(None, lambda: summarize_features(query_ssm), f"cache/{query_id}/query_summary.pkl", is_numpy=False)
     print("[로그 6/14]    - 요약 특징 추출 완료")
 
     sim_scores = []
@@ -40,18 +39,20 @@ def run():
         if not ref_file.endswith(".wav"):
             continue
 
-        print(f"[로그 7/14] ▶ ({current_idx}/{total_refs}) 비교 대상: {ref_file}")
         ref_path = os.path.join(ref_dir, ref_file)
+        ref_id = ref_file.split("_")[2]
 
-        ref_feat = extract_chroma(ref_path)
+        print(f"[로그 7/14] ▶ ({current_idx}/{total_refs}) 비교 대상: {ref_file}")
+
+        ref_feat = cache_or_compute(ref_path, extract_chroma, f"cache/{query_id}/ref_{ref_id}_feat.npy")
         print(f"[로그 8/14] ▶ ({current_idx}/{total_refs})   - 특징 추출 완료")
 
-        ref_sdm = compute_mass_sdm(ref_feat)
-        print(f"[로그 9/14]  ▶ ({current_idx}/{total_refs})  - SDM 계산 완료")
+        ref_sdm = cache_or_compute(None, lambda: compute_mass_sdm(ref_feat), f"cache/{query_id}/ref_{ref_id}_sdm.npy")
+        print(f"[로그 9/14] ▶ ({current_idx}/{total_refs})   - SDM 계산 완료")
 
-        ref_sdm_hr = reduce_hubness(ref_sdm)
-        ref_ssm = enhance_network(ref_sdm_hr)
-        ref_summary = summarize_features(ref_ssm)
+        ref_sdm_hr = cache_or_compute(None, lambda: reduce_hubness(ref_sdm), f"cache/{query_id}/ref_{ref_id}_sdm_hr.npy")
+        ref_ssm = cache_or_compute(None, lambda: enhance_network(ref_sdm_hr), f"cache/{query_id}/ref_{ref_id}_ssm.npy")
+        ref_summary = cache_or_compute(None, lambda: summarize_features(ref_ssm), f"cache/{query_id}/ref_{ref_id}_summary.pkl", is_numpy=False)
 
         sim_score = compute_cross_similarity(query_summary, ref_summary)
         print(f"[로그 10/14] ▶ ({current_idx}/{total_refs})  - 유사도 계산 결과 ({ref_file}): {sim_score:.4f}")
@@ -60,7 +61,7 @@ def run():
         ref_list.append(ref_file)
         current_idx += 1
 
-    # 정확도 계산: 쿼리와 같은 곡 번호를 가진 커버들만 정답으로 간주
+    # 정확도 계산
     threshold = 0.5
     TP, TN, FP, FN = 0, 0, 0, 0
     for ref, score in zip(ref_list, sim_scores):
@@ -82,7 +83,7 @@ def run():
     print(f"FN(정답=1, 예측=0): {FN}")
     print("[로그 12/14] 전체 비교 완료")
 
-    # 후처리: 유사도 결과 저장
+    # 유사도 결과 저장
     result_path = "data/results/similarity_scores.txt"
     os.makedirs(os.path.dirname(result_path), exist_ok=True)
     with open(result_path, "w", encoding="utf-8") as f:
@@ -91,8 +92,6 @@ def run():
     print(f"[로그 13/14] 유사도 결과 저장 완료 → {result_path}")
 
     print("[로그 14/14] 프로그램 종료 완료")
-
-
 
 if __name__ == "__main__":
     run()

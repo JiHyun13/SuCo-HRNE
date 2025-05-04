@@ -1,28 +1,20 @@
 import numpy as np
+from scipy.sparse import csr_matrix
 
-def reduce_hubness(sdm, method='snn', k=10):
-    if method == 'snn':
-        # Shared Nearest Neighbors (SNN) Hubness Reduction
-        N = sdm.shape[0]
-        knn_indices = np.argsort(sdm, axis=1)[:, 1:k+1]  # exclude self (0th)
-        snn_matrix = np.zeros_like(sdm)
+def reduce_hubness(sdm, k=10):
+    N = sdm.shape[0]
+    knn_indices = np.argsort(sdm, axis=1)[:, 1:k+1]  # exclude self
 
-        for i in range(N):
-            for j in range(N):
-                shared = len(set(knn_indices[i]) & set(knn_indices[j]))
-                snn_matrix[i, j] = k - shared
+    # 1. Sparse binary k-NN matrix (N x N)
+    row_idx = np.repeat(np.arange(N), k)
+    col_idx = knn_indices.flatten()
+    data = np.ones(len(row_idx))
+    knn_sparse = csr_matrix((data, (row_idx, col_idx)), shape=(N, N))
 
-        return snn_matrix
-    elif method == 'local_scaling':
-        # Local Scaling: divide by distance to k-th neighbor
-        kth = np.sort(sdm, axis=1)[:, k]
-        scale = kth[:, np.newaxis] * kth[np.newaxis, :]
-        return sdm / (scale + 1e-8)
-    elif method == 'mp':
-        # Mutual Proximity
-        mu = np.mean(sdm)
-        sigma = np.std(sdm)
-        mp_matrix = 1 - np.exp(-((sdm - mu) ** 2) / (2 * sigma ** 2))
-        return mp_matrix
-    else:
-        return sdm
+    # 2. SNN: shared neighbor count = dot product
+    shared_counts = knn_sparse @ knn_sparse.T  # (N x N), fast!
+
+    # 3. 거리로 바꾸기 (공유 이웃 적을수록 거리 큼)
+    snn_matrix = k - shared_counts.toarray()
+
+    return snn_matrix
