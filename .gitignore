@@ -1,0 +1,48 @@
+# Python & OS
+__pycache__/
+*.py[cod]
+*.ipynb_checkpoints
+.DS_Store
+
+# Environment
+.env
+*.venv/
+.venv/
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Data
+*.csv
+*.tsv
+*.npy
+*.npz
+*.pkl
+*.pt
+*.h5
+*.ckpt
+
+# Audio & Video
+*.wav
+*.mp3
+*.flac
+*.ogg
+*.m4a
+*.mp4
+*.avi
+
+# Archives
+*.zip
+*.tar.gz
+*.tar
+*.rar
+
+# Project folders
+logs/
+outputs/
+checkpoints/
+
+# SuCo-HRNE specific
+/data/원천데이터/
+/data/라벨링데이터/
+/data/results/
