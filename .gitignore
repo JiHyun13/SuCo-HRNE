@@ -46,3 +46,8 @@ checkpoints/
 /data/원천데이터/
 /data/라벨링데이터/
 /data/results/
+
+#라벨링데이터
+*.xml
+*.json
+*.mid
