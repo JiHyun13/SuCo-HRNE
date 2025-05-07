@@ -6,7 +6,10 @@ from modules.hubness import reduce_hubness
 from modules.network import enhance_network
 from modules.summarizer import summarize_features
 from similarity.cross_similarity import compute_cross_similarity
+from similarity.cross_similarity import compute_segmentwise_cosine_similarity
 from cashe import cache_or_compute
+
+from modules.chroma_summarizer import summarize_chroma_features
 
 def run():
     os.chdir(os.path.dirname(os.path.abspath(__file__)))
@@ -103,15 +106,21 @@ def run_test():
 
     print(f"[테스트 로그 1/10] ▶ 쿼리 곡 로딩 중: {query_path}")
     query_feat = cache_or_compute(query_path, extract_chroma, f"cache/{query_id}/query_feat.npy")
-    query_sdm = cache_or_compute(None, lambda: compute_mass_sdm(query_feat), f"cache/{query_id}/query_sdm.npy")
-    query_sdm_hr = cache_or_compute(None, lambda: reduce_hubness(query_sdm), f"cache/{query_id}/query_sdm_hr.npy")
-    query_ssm = cache_or_compute(None, lambda: enhance_network(query_sdm_hr), f"cache/{query_id}/query_ssm.npy")
-    query_summary = cache_or_compute(None, lambda: summarize_features(query_ssm), f"cache/{query_id}/query_summary.pkl", is_numpy=False)
+    #query_sdm = cache_or_compute(None, lambda: compute_mass_sdm(query_feat), f"cache/{query_id}/query_sdm.npy")
+    #query_sdm_hr = cache_or_compute(None, lambda: reduce_hubness(query_sdm), f"cache/{query_id}/query_sdm_hr.npy")
+    #query_ssm = cache_or_compute(None, lambda: enhance_network(query_sdm_hr), f"cache/{query_id}/query_ssm.npy")
+    query_summary = cache_or_compute(
+    None,
+    lambda: summarize_chroma_features(query_feat, method='segment_mean_std', num_segments=5),
+    f"cache/{query_id}/query_summary.pkl",
+    is_numpy=False
+    )
 
     print("[테스트 로그 6/10] ▶ 쿼리 요약 특징 추출 완료")
     print("쿼리 summary:", query_summary.shape)
 
-    ref_files = [f for f in os.listdir(ref_dir) if f.endswith(".wav")][:3]
+    # ref_id 필터링: query_id를 포함한 reference만 선택
+    ref_files = [f for f in os.listdir(ref_dir) if f.endswith(".wav")]
 
     sim_scores = []
     ref_list = []
@@ -122,10 +131,15 @@ def run_test():
         ref_id = ref_file.split("_")[2]
 
         ref_feat = cache_or_compute(ref_path, extract_chroma, f"cache/{query_id}/ref_{ref_id}_feat.npy")
-        ref_sdm = cache_or_compute(None, lambda: compute_mass_sdm(ref_feat), f"cache/{query_id}/ref_{ref_id}_sdm.npy")
-        ref_sdm_hr = cache_or_compute(None, lambda: reduce_hubness(ref_sdm), f"cache/{query_id}/ref_{ref_id}_sdm_hr.npy")
-        ref_ssm = cache_or_compute(None, lambda: enhance_network(ref_sdm_hr), f"cache/{query_id}/ref_{ref_id}_ssm.npy")
-        ref_summary = cache_or_compute(None, lambda: summarize_features(ref_ssm), f"cache/{query_id}/ref_{ref_id}_summary.pkl", is_numpy=False)
+        #ref_sdm = cache_or_compute(None, lambda: compute_mass_sdm(ref_feat), f"cache/{query_id}/ref_{ref_id}_sdm.npy")
+        #ref_sdm_hr = cache_or_compute(None, lambda: reduce_hubness(ref_sdm), f"cache/{query_id}/ref_{ref_id}_sdm_hr.npy")
+        #ref_ssm = cache_or_compute(None, lambda: enhance_network(ref_sdm_hr), f"cache/{query_id}/ref_{ref_id}_ssm.npy")
+        ref_summary = cache_or_compute(
+        None,
+        lambda: summarize_chroma_features(ref_feat, method='segment_mean_std', num_segments=5),
+        f"cache/{query_id}/ref_{ref_id}_summary.pkl",
+        is_numpy=False
+        )
 
         print("레퍼런스 summary:", ref_summary.shape)
 
@@ -135,12 +149,13 @@ def run_test():
         ref_list.append(ref_file)
         print(f"[테스트 로그 8.{idx}/10] ▶ 유사도 점수: {sim_score:.4f}")
 
-    result_path = "data/results/test_similarity_scores2.txt"
+    result_path = "data/results/test_similarity_scores_원본.txt"
     os.makedirs(os.path.dirname(result_path), exist_ok=True)
     with open(result_path, "w", encoding="utf-8") as f:
         for i, (ref, score) in enumerate(zip(ref_list, sim_scores), start=1):
             f.write(f"{i}번째 음악 ({ref}) 유사도: {score:.4f}\n")
 
+    # 정확도 평가
     threshold = 0.5
     TP, TN, FP, FN = 0, 0, 0, 0
 
@@ -161,8 +176,8 @@ def run_test():
     accuracy = (TP + TN) / total if total > 0 else 0
     print(f"[디버깅] ▶ 정확도 계산 완료: TP={TP}, TN={TN}, FP={FP}, FN={FN}")
     print(f"[디버깅] ▶ 정확도: {accuracy:.2%}")
-
     print("[테스트 로그 10/10] ▶ 테스트 완료 및 결과 저장 완료 →", result_path)
+
 
 if __name__ == "__main__":
     run_test()
