@@ -10,7 +10,7 @@
 
 ## 📁 폴더 구조
 
-SuCo-HRNE/
+SuCo-HRNE/   
 ├── run.py # 전체 실행 스크립트   
 ├── file.py # 파일 정리 및 샘플 분리   
 ├── cashe.py # 캐시 저장 함수   
