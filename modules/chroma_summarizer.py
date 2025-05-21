@@ -1,13 +1,15 @@
 import numpy as np
 
 def summarize_chroma_features(chroma_feat, method='segment_mean_std', num_segments=5):
-    print("크로마 요약 벡터 생성 시작 (method:", method, ")")
-
     if chroma_feat is None or len(chroma_feat) == 0:
-        return np.zeros((num_segments, 24)) if 'mean_std' in method else np.zeros((num_segments, 12))
+        feature_dim = 12  # 기본값
+        return np.zeros((num_segments, feature_dim * 2)) if 'mean_std' in method else np.zeros((num_segments, feature_dim))
+
+    feature_dim = chroma_feat.shape[1]  # 입력 벡터의 실제 차원
 
     if method == 'mean':
-        return np.mean(chroma_feat, axis=0, keepdims=True)
+        summary = np.mean(chroma_feat, axis=0, keepdims=True)
+        return summary
 
     elif method == 'segment':
         time_len = chroma_feat.shape[0]
@@ -18,9 +20,11 @@ def summarize_chroma_features(chroma_feat, method='segment_mean_std', num_segmen
             start = i * segment_len
             end = (i + 1) * segment_len if i < num_segments - 1 else time_len
             segment = chroma_feat[start:end]
-            segments.append(np.mean(segment, axis=0))
+            mean_vec = np.mean(segment, axis=0)
+            segments.append(mean_vec)
 
-        return np.array(segments)
+        summary = np.array(segments)
+        return summary
 
     elif method == 'segment_mean_std':
         time_len = chroma_feat.shape[0]
@@ -31,14 +35,13 @@ def summarize_chroma_features(chroma_feat, method='segment_mean_std', num_segmen
             start = i * segment_len
             end = (i + 1) * segment_len if i < num_segments - 1 else time_len
             segment = chroma_feat[start:end]
-
             mean_vec = np.mean(segment, axis=0)
             std_vec = np.std(segment, axis=0)
-
-            combined_vec = np.concatenate([mean_vec, std_vec])  # (12 + 12,) → total 24
+            combined_vec = np.concatenate([mean_vec, std_vec])
             summaries.append(combined_vec)
 
-        return np.array(summaries)
+        summary = np.array(summaries)
+        return summary
 
     else:
         raise ValueError("Unknown method for summarizing chroma features.")

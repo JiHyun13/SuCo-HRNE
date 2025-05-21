@@ -20,6 +20,14 @@ def compute_segmentwise_cosine_similarity(query_summary, ref_summary):
     print(f"[디버깅] segment-wise 코사인 유사도 평균: {sim_score:.4f}")
     return sim_score
 
+def rowwise_max(query_summary, ref_summary):
+    from sklearn.metrics.pairwise import cosine_similarity
+    sim_matrix = cosine_similarity(query_summary, ref_summary)
+    row_max = np.max(sim_matrix, axis=1)  # query의 각 segment에 대해 가장 유사한 ref segment
+    sim_score = np.mean(row_max)
+    return sim_score
+
+
 
 
 
