@@ -43,9 +43,8 @@ outputs/
 checkpoints/
 
 # SuCo-HRNE specific
-/data/원천데이터/
-/data/라벨링데이터/
-/data/results/
+/cache/
+
 
 #라벨링데이터
 *.xml
