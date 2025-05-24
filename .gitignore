@@ -12,15 +12,8 @@ __pycache__/
 # Jupyter
 .ipynb_checkpoints/
 
-# Data
-*.csv
-*.tsv
-*.npy
-*.npz
-*.pkl
-*.pt
-*.h5
-*.ckpt
+# Output
+/output/results/
 
 # Audio & Video
 *.wav
@@ -37,10 +30,6 @@ __pycache__/
 *.tar
 *.rar
 
-# Project folders
-logs/
-outputs/
-checkpoints/
 
 # SuCo-HRNE specific
 /cache/

@@ -1,7 +1,14 @@
 import numpy as np
 from sklearn.metrics.pairwise import cosine_similarity
 from sklearn.preprocessing import normalize
+from scipy.spatial.distance import euclidean
 
+def eucli(query_summary, ref_summary):
+    score = euclidean(query_summary.flatten(), ref_summary.flatten())
+
+    max_distance = 500
+    normalized_score = max(0, 100 * (1 - (score / max_distance)))
+    return normalized_score
 
 def compute_segmentwise_cosine_similarity(query_summary, ref_summary):
     """
