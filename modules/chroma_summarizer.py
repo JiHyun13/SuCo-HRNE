@@ -1,41 +1,41 @@
 import numpy as np
 import librosa
 
-def summarize_chroma_features(chroma_feat, method='segment_mean_std', num_segments=5):
-    if chroma_feat is None or len(chroma_feat) == 0:
+def summarize_features(feat, method='segment_mean_std', num_segments=10):
+    if feat is None or len(feat) == 0:
         feature_dim = 12  # 기본값
         return np.zeros((num_segments, feature_dim * 2)) if 'mean_std' in method else np.zeros((num_segments, feature_dim))
 
-    feature_dim = chroma_feat.shape[1]  # 입력 벡터의 실제 차원
+    feature_dim = feat.shape[1]  # 입력 벡터의 실제 차원
 
-    if method == 'mean':
-        summary = np.mean(chroma_feat, axis=0, keepdims=True)
+    if method == 'mean': #단순 평균
+        summary = np.mean(feat, axis=0, keepdims=True)
         return summary
 
-    elif method == 'segment':
-        time_len = chroma_feat.shape[0]
+    elif method == 'segment': #num_segment 개수대로 구간 만들어 구간 별 평균 반환
+        time_len = feat.shape[0]
         segment_len = time_len // num_segments
         segments = []
 
         for i in range(num_segments):
             start = i * segment_len
             end = (i + 1) * segment_len if i < num_segments - 1 else time_len
-            segment = chroma_feat[start:end]
+            segment = feat[start:end]
             mean_vec = np.mean(segment, axis=0)
             segments.append(mean_vec)
 
         summary = np.array(segments)
         return summary
 
-    elif method == 'segment_mean_std':
-        time_len = chroma_feat.shape[0]
+    elif method == 'segment_mean_std': #num_segment 개수대로 구간 만들어 구간 별 평균&표준편차 반환
+        time_len = feat.shape[0]
         segment_len = time_len // num_segments
         summaries = []
 
         for i in range(num_segments):
             start = i * segment_len
             end = (i + 1) * segment_len if i < num_segments - 1 else time_len
-            segment = chroma_feat[start:end]
+            segment = feat[start:end]
             mean_vec = np.mean(segment, axis=0)
             std_vec = np.std(segment, axis=0)
             combined_vec = np.concatenate([mean_vec, std_vec])
@@ -45,7 +45,7 @@ def summarize_chroma_features(chroma_feat, method='segment_mean_std', num_segmen
         return summary
 
     else:
-        raise ValueError("Unknown method for summarizing chroma features.")
+        raise ValueError("method가 잘못됨")
 
 
 def extract_mfcc(audio_path, n_mfcc=13):
