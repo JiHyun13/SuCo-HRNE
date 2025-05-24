@@ -87,6 +87,7 @@ test_similarity_scores_eucli_00221.txt ▶ 정확도: 97.05% (TP=1, TN=7762, FP=
 test_similarity_scores_eucli_00223.txt ▶ 정확도: 76.10% (TP=6, TN=6081, FP=1910, FN=2)
 test_similarity_scores_eucli_00230.txt ▶ 정확도: 83.20% (TP=5, TN=6650, FP=1341, FN=3)
 test_similarity_scores_eucli_00232.txt ▶ 정확도: 81.37% (TP=2, TN=6507, FP=1484, FN=6)
+711911 개의 데이터
 
 [전체 정확도]
 ▶ 정확도: 82.94% (TP=301, TN=590178, FP=121024, FN=408)
