@@ -89,5 +89,6 @@ def run():
     evaluate_accuracy_for_all_results()
 
 if __name__ == "__main__":
-    run()
+    evaluate_accuracy_for_all_results()
+    #run()
     

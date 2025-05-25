@@ -9,25 +9,25 @@ def evaluate_accuracy_for_all_results(
     output_path_csv="SuCo-HRNE/output/accuracy_report.csv"
 ):
     print('result 계산 시작')
-    csv_files = [f for f in os.listdir(result_dir) if f.startswith("similarity_") and f.endswith(".csv")]
+    csv_files = [f for f in os.listdir(result_dir) if f.startswith("scores_") and f.endswith(".csv")]
 
     report_lines = []
     csv_rows = [["Filename", "QueryID", "TP", "TN", "FP", "FN", "Total", "Accuracy(%)"]]
     summary_stats = {"TP": 0, "TN": 0, "FP": 0, "FN": 0}
 
     for filename in sorted(csv_files):
-        query_id = filename.split("_")[-1].replace(".csv", "")
+        query_id = filename.split("_")[-1].replace(".csv", "").zfill(5)
         file_path = os.path.join(result_dir, filename)
 
         TP = TN = FP = FN = 0
         with open(file_path, encoding="utf-8") as f:
             reader = csv.DictReader(f)
             for row in reader:
-                if row["type"] != "reference":
+                if row.get("type") != "reference":
                     continue
 
-                score = float(row["similarity"])
-                ref_id = row["song_id"]
+                score = float(row.get("similarity", 0))
+                ref_id = str(row.get("song_id", "")).zfill(5)
                 is_correct = (ref_id == query_id)
                 pred = score >= threshold
 
@@ -51,7 +51,7 @@ def evaluate_accuracy_for_all_results(
         summary_stats["FP"] += FP
         summary_stats["FN"] += FN
 
-    total_all = sum(summary_stats.values())
+    total_all = summary_stats["TP"] + summary_stats["TN"] + summary_stats["FP"] + summary_stats["FN"]
     overall_acc = (summary_stats["TP"] + summary_stats["TN"]) / total_all * 100 if total_all > 0 else 0
     report_lines.append(f"{total_all} 개의 데이터")
     report_lines.append("\n[전체 정확도]")
