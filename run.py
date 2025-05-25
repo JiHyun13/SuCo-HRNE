@@ -1,13 +1,13 @@
 import os
 import numpy as np
 from features.extract_features import extract_combined_features
-from modules.mass import compute_mass_sdm
+from modules.sdm import compute_cosine_sdm
 from modules.hubness import reduce_hubness
 from modules.network import enhance_network
-from similarity.cross_similarity import compute_cross_similarity, rowwise_max, eucli
+from similarity.cross_similarity import compute_cross_similarity, eucli
 from other.cache import cache_or_compute, cache_all_wavs
 from glob import glob
-from modules.chroma_summarizer import summarize_features, extract_mfcc
+from modules.chroma_summarizer import summarize_features
 from other.results import evaluate_accuracy_for_all_results
 import csv
 
