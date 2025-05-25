@@ -24,11 +24,6 @@ __pycache__/
 *.mp4
 *.avi
 
-# Archives
-*.zip
-*.tar.gz
-*.tar
-*.rar
 
 
 # SuCo-HRNE specific
