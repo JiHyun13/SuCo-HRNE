@@ -3,10 +3,10 @@ import re
 import csv
 
 def evaluate_accuracy_for_all_results(
-    result_dir="SuCo-HRNE/output/results",
-    threshold=50.0,
-    output_path_txt="SuCo-HRNE/output/accuracy_report.txt",
-    output_path_csv="SuCo-HRNE/output/accuracy_report.csv"
+    result_dir="output/results",
+    threshold=69.27,
+    output_path_txt="output/accuracy_report2.txt",
+    output_path_csv="output/accuracy_report2.csv"
 ):
     print('result 계산 시작')
     csv_files = [f for f in os.listdir(result_dir) if f.startswith("scores_") and f.endswith(".csv")]

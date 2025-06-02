@@ -1,12 +1,6 @@
 import numpy as np
 
 def summarize_features(ssm, method='repeat', num_segments=5):
-    """
-    특징 요약 벡터 생성
-    - method: 'repeat' 또는 'thumbnail'
-    - fallback 포함
-    - 값 정규화 처리 포함
-    """
     if method == 'repeat':
         repeats = find_repeats(ssm, threshold=0.85, min_len=5)
         if len(repeats) == 0:

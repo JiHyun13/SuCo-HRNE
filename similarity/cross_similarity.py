@@ -10,6 +10,7 @@ def eucli(query_summary, ref_summary):
     normalized_score = max(0, 100 * (1 - (score / max_distance)))
     return normalized_score
 
+#코사인 유사도/사용하지 않음.
 def compute_segmentwise_cosine_similarity(query_summary, ref_summary):
     """
     segment 간 코사인 유사도를 평균내어 유사도 점수로 사용.
@@ -24,9 +25,10 @@ def compute_segmentwise_cosine_similarity(query_summary, ref_summary):
     sim_matrix = cosine_similarity(query_summary, ref_summary)
     sim_score = np.mean(sim_matrix)
 
-    print(f"[디버깅] segment-wise 코사인 유사도 평균: {sim_score:.4f}")
+    print(f"디버깅 /segment-wise 코사인 유사도 평균: {sim_score:.4f}")
     return sim_score
 
+#rowwise/사용하지 않음.
 def rowwise_max(query_summary, ref_summary):
     from sklearn.metrics.pairwise import cosine_similarity
     sim_matrix = cosine_similarity(query_summary, ref_summary)

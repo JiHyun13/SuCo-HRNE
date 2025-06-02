@@ -50,7 +50,7 @@ def cache_all_wavs(ts_root):
             # Summary 저장
             _ = cache_or_compute(
                 None,
-                lambda: summarize_chroma_features(feat, method='segment_mean_std', num_segments=10),
+                lambda: extract_combined_features(feat, method='segment_mean_std', num_segments=10),
                 summary_path,
                 is_numpy=False
             )
